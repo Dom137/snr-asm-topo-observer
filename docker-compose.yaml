@@ -1,0 +1,41 @@
+version: '3.7'
+services:
+  topo-observer:
+    image: topo-observer
+    working_dir: /topo-obs
+    volumes:
+      - ./:/topo-obs
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - SCHEDULE=*/15 * * * *
+      - TOPO_DB_QUERY_SQL=select __TOPO_DB_QUERY_FIELDS__ from __TOPO_DB_NAME__
+      - TOPO_DB_QUERY_FIELDS=TOPOLOGYID,TOPOLOGY_NAME,TOPOLOGY_TYPE
+      - TOPO_DB_NAME=V_TOPOLOGY
+      - TOPO_REL_DB_QUERY_SQL=select __TOPO_REL_DB_QUERY_FIELDS__ from __TOPO_REL_DB_NAME__
+      - TOPO_REL_DB_QUERY_FIELDS=TOPOLOGYID,NODEID
+      - TOPO_REL_DB_NAME=V_TOPOLOGY_NODES
+      - TOPO_DB_USER=sunrise
+      - TOPO_DB_PW=oadvice
+      - TOPO_DB_CON=(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.12.189)(PORT = 1521))(CONNECT_DATA =(SID= ORCL)))
+      - ASM_BASE_URL=https://192.168.12.226/1.0/rest-observer/rest/
+      - ASM_TOPO_URL=https://192.168.12.226/1.0/topology/
+      - ASM_USER=asm
+      - ASM_PASS=asm
+      - ASM_TENANT_ID=cfd95b7e-3bc7-4006-a4a8-a73a79c71255
+      - ASM_EP_JOB_ID=snr_inventory
+      - ASM_EP_RES=resources
+      - ASM_EP_RES_FLT=?_filter=entityTypes%3D__ASM_ENTITY_TYPE__&_limit=__LIMIT__&_offset=__OFFSET__&_sort=+uniqueId&_field=uniqueId&_include_global_resources=false&_include_count=false&_include_status=false&_include_status_severity=false&_include_metadata=false&_return_composites=true
+      - ASM_EP_RES_CNT=?_filter=entityTypes%3D__ASM_ENTITY_TYPE__&_limit=1&_include_global_resources=false&_include_count=true&_include_status=false&_include_status_severity=false&_include_metadata=false&_return_composites=true
+      - ASM_EP_RES_NODE_FLT=?_filter=entityTypes%3DnetworkDevice&_limit=__LIMIT__&_offset=__OFFSET__&_sort=+uniqueId&_field=nodeid&_field=uniqueId&_include_global_resources=false&_include_count=false&_include_status=false&_include_status_severity=false&_include_metadata=false&_return_composites=true
+      - ASM_EP_RES_NODE_CNT=?_filter=entityTypes%3DnetworkDevice&_limit=1&_include_global_resources=false&_include_count=true&_include_status=false&_include_status_severity=false&_include_metadata=false&_return_composites=true
+      - TZ=Europe/Berlin
+      - DELETE_IF_NOT_PRESENT_IN_INV=true
+      - ASM_EP_REF=references
+      - ASM_EP_REF_DEL=/references/out/contains?_delete=nodes&_delete_self=false
+      - ASM_EP_RES_DEL_IMMEDIATE=true
+      - ASM_EP_DEL_WAIT_TIME_MS=6000
+      - ASM_EP_RES_DEL_IMMEDIATE_PARAM=?_immediate=true
+      - ASM_ENTITY_TYPE=cmdb-topology
+      - ASM_RESPONSE_TIMEOUT=10000
+      - ASM_BATCH_SIZE=5000
+    command: 'npm run dev'

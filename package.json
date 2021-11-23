@@ -1,0 +1,24 @@
+{
+  "name": "topo-observer",
+  "version": "1.0.0",
+  "description": "Queries topology data from Cramer Oracle DB",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "start": "node app.js"
+  },
+  "author": "@OpenAdvice",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "node-cron": "^3.0.0",
+    "oracledb": "^5.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 120
+  }
+}
