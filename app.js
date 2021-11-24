@@ -222,60 +222,91 @@ const token = Buffer.from(`${ASM_USER}:${ASM_PASS}`, 'utf8').toString('base64');
 /***************** END CONFIGURATION *******************/
 
 //schedule a periodic run
-// cron.schedule(process.env.SCHEDULE || '*/30 * * * *', () => {
-//   console.log(getCurrentDate() + '  Looking for new data in inventory database...');
-//   console.log(getCurrentDate() + ` Collecting current ressources from ASM, using filter on type <${ASM_ENTITY_TYPE}>`);
-//   getAsmRessourceCount()
-//     .then((cnt) => {
-//       getFromAsm(cnt)
-//         .then((data) => {
-//           entitiesInAsm = data;
-//           collectTopologyData();
-//         })
-//         .catch((err) => console.log(err));
-//     })
-//     .catch((err) => console.log(err));
-// });
+cron.schedule(process.env.SCHEDULE || '*/30 * * * *', () => {
+  console.log(getCurrentDate() + '  Looking for new topology data in inventory database...');
+  collectTopologyData(TOPO_DB_QUERY_SQL, TOPO_DB_QUERY_FIELDS, false)
+    .then((data) => {
+      console.log(getCurrentDate() + ` Done collectiong topology data.`);
+      topologyData = data;
+      collectTopologyData(TOPO_REL_DB_QUERY_SQL, TOPO_REL_DB_QUERY_FIELDS, true)
+        .then((data) => {
+          console.log(getCurrentDate() + ` Done collectiong topology relation data.`);
+          topologyRelationData = data;
+          console.log(
+            getCurrentDate() + ` Collecting current ressources from ASM, using filter on type <${ASM_ENTITY_TYPE}>`
+          );
+          getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_CNT)
+            .then((cnt) => {
+              getFromAsm(cnt, ASM_EP_RES_FLT, false)
+                .then((data) => {
+                  entitiesInAsm = data;
+                  getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_NODE_CNT)
+                    .then((cnt) => {
+                      getFromAsm(cnt, ASM_EP_RES_NODE_FLT, true)
+                        .then((data) => {
+                          nodesInAsm = data;
+                          syncAsm()
+                            .then(() => {
+                              sendToAsm()
+                                .then(() => {
+                                  console.log(getCurrentDate() + ` Topology collector completed a run.`);
+                                })
+                                .catch((err) => console.log(err));
+                            })
+                            .catch((err) => console.log(err));
+                        })
+                        .catch((err) => console.log(err));
+                    })
+                    .catch((err) => console.log(err));
+                })
+                .catch((err) => console.log(err));
+            })
+            .catch((err) => console.log(err));
+        })
+        .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
+});
 
-collectTopologyData(TOPO_DB_QUERY_SQL, TOPO_DB_QUERY_FIELDS, false)
-  .then((data) => {
-    console.log(getCurrentDate() + ` Done collectiong topology data.`);
-    topologyData = data;
-    collectTopologyData(TOPO_REL_DB_QUERY_SQL, TOPO_REL_DB_QUERY_FIELDS, true)
-      .then((data) => {
-        console.log(getCurrentDate() + ` Done collectiong topology relation data.`);
-        topologyRelationData = data;
-        getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_CNT)
-          .then((cnt) => {
-            getFromAsm(cnt, ASM_EP_RES_FLT, false)
-              .then((data) => {
-                entitiesInAsm = data;
-                getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_NODE_CNT)
-                  .then((cnt) => {
-                    getFromAsm(cnt, ASM_EP_RES_NODE_FLT, true)
-                      .then((data) => {
-                        nodesInAsm = data;
-                        syncAsm()
-                          .then(() => {
-                            sendToAsm()
-                              .then(() => {
-                                console.log(getCurrentDate() + ` Topology collector completed a run.`);
-                              })
-                              .catch((err) => console.log(err));
-                          })
-                          .catch((err) => console.log(err));
-                      })
-                      .catch((err) => console.log(err));
-                  })
-                  .catch((err) => console.log(err));
-              })
-              .catch((err) => console.log(err));
-          })
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => console.log(err));
-  })
-  .catch((err) => console.log(err));
+// collectTopologyData(TOPO_DB_QUERY_SQL, TOPO_DB_QUERY_FIELDS, false)
+//   .then((data) => {
+//     console.log(getCurrentDate() + ` Done collectiong topology data.`);
+//     topologyData = data;
+//     collectTopologyData(TOPO_REL_DB_QUERY_SQL, TOPO_REL_DB_QUERY_FIELDS, true)
+//       .then((data) => {
+//         console.log(getCurrentDate() + ` Done collectiong topology relation data.`);
+//         topologyRelationData = data;
+//         getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_CNT)
+//           .then((cnt) => {
+//             getFromAsm(cnt, ASM_EP_RES_FLT, false)
+//               .then((data) => {
+//                 entitiesInAsm = data;
+//                 getAsmRessourceCount(ASM_TOPO_URL, ASM_EP_RES, ASM_EP_RES_NODE_CNT)
+//                   .then((cnt) => {
+//                     getFromAsm(cnt, ASM_EP_RES_NODE_FLT, true)
+//                       .then((data) => {
+//                         nodesInAsm = data;
+//                         syncAsm()
+//                           .then(() => {
+//                             sendToAsm()
+//                               .then(() => {
+//                                 console.log(getCurrentDate() + ` Topology collector completed a run.`);
+//                               })
+//                               .catch((err) => console.log(err));
+//                           })
+//                           .catch((err) => console.log(err));
+//                       })
+//                       .catch((err) => console.log(err));
+//                   })
+//                   .catch((err) => console.log(err));
+//               })
+//               .catch((err) => console.log(err));
+//           })
+//           .catch((err) => console.log(err));
+//       })
+//       .catch((err) => console.log(err));
+//   })
+//   .catch((err) => console.log(err));
 
 async function collectTopologyData(query, fields, relations) {
   console.log(getCurrentDate() + ` Looking for new data using query <${query}>`);
